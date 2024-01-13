@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  web-container:
+    image: myimage:dev
+    container_name: web-container
+    hostname: web-container
+    build:
+      context: ./
+      dockerfile: ./dev.dockerfile
+    volumes:
+      - ./code/:/var/www/html/
+      - ./docker/dev/apache/vhost.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./docker/dev/php/php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+    ports:
+      - "8080:80"
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.10
+    depends_on:
+      - db-container
+      - cache-container
+
+  db-container:
+    #    image: mysql:8.0-debian
+    image: mysql:8.0-oracle # използвайте това, ако сте с ARM процесор
+    container_name: db-container
+    hostname: db-container
+    environment:
+      MYSQL_ROOT_PASSWORD: S0m3C0mpl3xP4ss
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "33006:3306"
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.20
+
+  cache-container:
+    image: redis:7-alpine
+    container_name: cache-container
+    hostname: cache-container
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.30
+networks:
+  myimage_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+          gateway: 192.168.100.1

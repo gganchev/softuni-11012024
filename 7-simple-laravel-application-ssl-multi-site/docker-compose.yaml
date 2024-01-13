@@ -1,0 +1,91 @@
+version: '3'
+
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy:alpine
+    container_name: nginx-proxy
+    hostname: nginx-proxy
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.2
+    ports:
+      - "80:80" # HTTP
+      - "443:443" # HTTPS
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+      - ./docker/certificates/output/:/etc/nginx/certs/ # SSL certificates
+      - ./docker/dev/nginx/custom.conf:/etc/nginx/conf.d/custom.conf # custom configuration
+
+  web-container:
+    image: myimage:dev
+    container_name: web-container
+    hostname: web-container
+    build:
+      context: ./
+      dockerfile: ./dev.dockerfile
+    volumes:
+      - ./code/:/var/www/html/
+      - ./docker/dev/apache/vhost1.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./docker/dev/php/php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+    environment:
+      - VIRTUAL_HOST=mysite.dev
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.10
+    depends_on:
+      - db-container
+      - cache-container
+
+  second-web-container:
+    image: myimage:dev
+    container_name: second-web-container
+    hostname: second-web-container
+    build:
+      context: ./
+      dockerfile: ./dev.dockerfile
+    volumes:
+      - ./code/:/var/www/html/
+      - ./docker/dev/apache/vhost2.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./docker/dev/php/php.ini:/usr/local/etc/php/conf.d/custom-php.ini
+    environment:
+      - VIRTUAL_HOST=yoursite.dev
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.11
+    depends_on:
+      - nginx-proxy
+      - db-container
+      - cache-container
+
+  db-container:
+    #    image: mysql:8.0-debian
+    image: mysql:8.0-oracle # използвайте това, ако сте с ARM процесор
+    container_name: db-container
+    hostname: db-container
+    environment:
+      MYSQL_ROOT_PASSWORD: S0m3C0mpl3xP4ss
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    ports:
+      - "33006:3306"
+    volumes:
+      - ./database_volume/:/var/lib/mysql
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.20
+
+  cache-container:
+    image: redis:7-alpine
+    container_name: cache-container
+    hostname: cache-container
+    networks:
+      myimage_network:
+        ipv4_address: 192.168.100.30
+networks:
+  myimage_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.100.0/24
+          gateway: 192.168.100.1

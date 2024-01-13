@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  web-container:
+    build: .
+    volumes:
+      - ./code/:/var/www/html/
+    ports:
+      - "8080:80"
+
+  db-container:
+#    image: mysql:8.0-debian
+    image: mysql:8.0-oracle # използвайте това, ако сте с M1 Mac
+    environment:
+      MYSQL_ROOT_PASSWORD: S0m3C0mpl3xP4ss
+      MYSQL_DATABASE: mydb
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+
+  cache-container:
+    image: redis:7-alpine

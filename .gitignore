@@ -1,0 +1,18 @@
+# Windows-specific files
+Thumbs.db
+# MacOS-specific files
+.DS_Store
+# Linux-specific files
+.*.swp
+*~
+# IDE-specific files for commonly used PHP IDEs (like PhpStorm, VSCode, etc.)
+## Visual Studio Code
+.vscode/
+## PhpStorm
+.idea/
+## NetBeans
+nbproject/
+## Eclipse
+.buildpath
+.project
+.settings/
